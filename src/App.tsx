@@ -41,6 +41,8 @@ export default function App() {
   // UI state
   const [activeTab, setActiveTab] = useState<'classroom' | 'reports' | 'portfolio'>('classroom');
   const [selectedTopicId, setSelectedTopicId] = useState<string>('carestream-pacs');
+  const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [exportCopied, setExportCopied] = useState<boolean>(false);
   
   // Form state
   const [newStaffName, setNewStaffName] = useState<string>('');
@@ -501,6 +503,12 @@ export default function App() {
             <span className="bg-[#F3F2F0] px-2.5 py-1 border border-black flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" /> อบรมสำเร็จ: <strong>{progressList.filter(p => p.status === 'completed').length}</strong> คอร์ส
             </span>
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 border border-black flex items-center gap-1 cursor-pointer transition-colors font-sans font-bold text-xs"
+            >
+              ☁️ อัปเดตข้อมูลขึ้น GitHub
+            </button>
           </div>
         </div>
       </section>
@@ -1228,6 +1236,93 @@ export default function App() {
                 className="px-5 py-1.5 bg-amber-400 hover:bg-amber-500 text-black border border-black text-xs font-bold cursor-pointer transition-colors"
               >
                 ตกลง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EXPORT BACKUP DIALOG MODAL */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs no-print">
+          <div className="bg-white border-2 border-black max-w-2xl w-full p-6 shadow-none flex flex-col space-y-4">
+            <div className="flex items-center justify-between border-b border-black pb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-indigo-600 shrink-0" />
+                <h3 className="text-sm font-extrabold uppercase tracking-wider text-[#1A1A1A] font-sans">
+                  เครื่องมือส่งออกข้อมูลสู่ GitHub
+                </h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  setExportCopied(false);
+                }}
+                className="text-gray-500 hover:text-black font-extrabold text-sm p-1 leading-none cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="text-xs text-slate-700 leading-relaxed font-sans space-y-2">
+              <p className="font-extrabold text-indigo-900 text-sm">
+                📌 ย้ายข้อมูลจาก Local Browser เข้าสู่ Code ของคุณอย่างสมบูรณ์แบบ!
+              </p>
+              <p>
+                เนื่องจากระบบจัดเก็บข้อมูลไว้ใน <b>LocalStorage ของเบราว์เซอร์คุณโดยเฉพาะ</b> เมื่อคุณส่งขึ้น GitHub Pages ข้อมูลรายชื่อและรูปเล่มที่ทำเสร็จแล้วอาจจะไม่แสดงผลหรือรีเซ็ตกลับเป็นค่าเริ่มต้น
+              </p>
+              <div className="bg-indigo-50 p-3 text-indigo-950 border-l-4 border-indigo-500 text-xs rounded-none space-y-1">
+                <p className="font-bold">วิธีส่งข้อมูล 6 คนและผลงานอบรมไปอัปเดตถาวรลง GitHub:</p>
+                <ol className="list-decimal pl-4 space-y-1">
+                  <li>คลิกปุ่ม <b>"📋 คัดลอกรหัส JSON สำหรับส่ง AI"</b> ข้างล่าง</li>
+                  <li>นำข้อมูลที่คัดลอกได้ <b>วางส่งมาในช่องแชท (Ask Gemini) ทางซ้ายมือนี้</b></li>
+                  <li>พิมพ์แจ้ง AI เพิ่มเติมว่า: <span className="text-indigo-700 font-bold">"นี่คือข้อมูลพนักงาน 6 คนและผลงานทั้งหมด ช่วยอัปเดตใส่เป็นค่าเริ่มต้นในระบบแล้วนำส่งขึ้น GitHub ให้ด้วย"</span></li>
+                  <li>AI จะบันทึกรายชื่อและผลงานทั้งหมดลงไปในโค้ดถาวรของเว็บบน GitHub เพื่อให้เมื่อทุกคนเปิดเว็บสามารถประเมินและดูผลงานจริงได้เลย!</li>
+                </ol>
+              </div>
+            </div>
+
+            <textarea
+              readOnly
+              rows={6}
+              className="w-full p-2 border border-black font-mono text-[9px] bg-slate-50 focus:outline-none"
+              value={JSON.stringify({
+                staffList,
+                progressList,
+                approvalList,
+                headName,
+                headPosition,
+                headSignature
+              })}
+              onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 font-sans">
+              <button
+                onClick={() => {
+                  setShowExportModal(false);
+                  setExportCopied(false);
+                }}
+                className="px-4 py-1.5 border border-black hover:bg-[#F3F2F0] text-xs font-bold cursor-pointer transition-colors"
+              >
+                ปิด
+              </button>
+              <button
+                onClick={() => {
+                  const dataStr = JSON.stringify({
+                    staffList,
+                    progressList,
+                    approvalList,
+                    headName,
+                    headPosition,
+                    headSignature
+                  });
+                  navigator.clipboard.writeText(dataStr);
+                  setExportCopied(true);
+                }}
+                className="px-5 py-1.5 bg-emerald-650 hover:bg-emerald-700 text-white bg-emerald-600 border border-black text-xs font-bold cursor-pointer transition-colors flex items-center gap-1.5"
+              >
+                {exportCopied ? '✓ คัดลอกสำเร็จแล้ว!' : '📋 คัดลอกรหัส JSON สำหรับส่ง AI'}
               </button>
             </div>
           </div>
