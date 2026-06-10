@@ -25,6 +25,7 @@ import { TOPICS_DATA } from './topicsData';
 import { SignaturePad } from './components/SignaturePad';
 import { StaffPortfolio } from './components/StaffPortfolio';
 import { MaethaLogo } from './components/MaethaLogo';
+import { DEFAULT_STAFF_LIST, DEFAULT_PROGRESS_LIST, DEFAULT_APPROVAL_LIST } from './defaultData';
 
 export default function App() {
   // --- STATE ---
@@ -91,81 +92,32 @@ export default function App() {
   useEffect(() => {
     // 1. Initial Staff Templates
     const savedStaff = localStorage.getItem('maetha_staff');
-    if (savedStaff) {
+    if (savedStaff && !savedStaff.includes('staff-1')) {
       const parsed = JSON.parse(savedStaff);
       setStaffList(parsed);
       if (parsed.length > 0) setActiveStaffId(parsed[0].id);
     } else {
-      const defaults: Staff[] = [
-        {
-          id: 'staff-1',
-          name: 'นายสมคิด ศรีรังสี',
-          position: 'นักรังสีการแพทย์ปฏิบัติการ',
-          department: 'งานรังสีวินิจฉัย โรงพยาบาลแม่ทา',
-          registeredAt: new Date('2026-01-15T08:00:00Z').toISOString()
-        },
-        {
-          id: 'staff-2',
-          name: 'นางสาวนลินี วงศ์แม่ทา',
-          position: 'เจ้าพนักงานรังสีการแพทย์ชำนาญงาน',
-          department: 'งานรังสีวินิจฉัย โรงพยาบาลแม่ทา',
-          registeredAt: new Date('2026-02-10T09:30:00Z').toISOString()
-        }
-      ];
-      setStaffList(defaults);
-      setActiveStaffId(defaults[0].id);
-      localStorage.setItem('maetha_staff', JSON.stringify(defaults));
+      setStaffList(DEFAULT_STAFF_LIST);
+      setActiveStaffId(DEFAULT_STAFF_LIST[0].id);
+      localStorage.setItem('maetha_staff', JSON.stringify(DEFAULT_STAFF_LIST));
     }
 
     // 2. Training Progress
     const savedProgress = localStorage.getItem('maetha_progress');
-    if (savedProgress) {
+    if (savedProgress && !savedProgress.includes('staff-1')) {
       setProgressList(JSON.parse(savedProgress));
     } else {
-      // Default sample progress to show statistics working
-      const defaultProgress: TrainingProgress[] = [
-        {
-          staffId: 'staff-1',
-          topicId: 'carestream-pacs',
-          status: 'completed',
-          quizScore: 3,
-          maxScore: 3,
-          passed: true,
-          completedAt: new Date('2026-05-20T10:15:00Z').toISOString(),
-          staffSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="30"><text x="10" y="20" font-family="script" font-size="20" fill="blue">Somkid</text></svg>'
-        },
-        {
-          staffId: 'staff-1',
-          topicId: 'pdpa-radiology',
-          status: 'completed',
-          quizScore: 2,
-          maxScore: 3,
-          passed: true,
-          completedAt: new Date('2026-05-22T14:40:00Z').toISOString(),
-          staffSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="30"><text x="10" y="20" font-family="script" font-size="20" fill="blue">Somkid</text></svg>'
-        }
-      ];
-      setProgressList(defaultProgress);
-      localStorage.setItem('maetha_progress', JSON.stringify(defaultProgress));
+      setProgressList(DEFAULT_PROGRESS_LIST);
+      localStorage.setItem('maetha_progress', JSON.stringify(DEFAULT_PROGRESS_LIST));
     }
 
     // 3. Approval List
     const savedApprovals = localStorage.getItem('maetha_approvals');
-    if (savedApprovals) {
+    if (savedApprovals && !savedApprovals.includes('staff-1')) {
       setApprovalList(JSON.parse(savedApprovals));
     } else {
-      const defaultApprovals: ApprovalRecord[] = [
-        {
-          staffId: 'staff-1',
-          topicId: 'carestream-pacs',
-          headName: 'นายสิทธิศักดิ์ เลาหกุล',
-          headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
-          headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="30"><text x="5" y="20" font-family="sans-serif" font-size="14" font-weight="bold" fill="red">Approved</text></svg>',
-          approvedAt: new Date('2026-05-21T09:00:00Z').toISOString()
-        }
-      ];
-      setApprovalList(defaultApprovals);
-      localStorage.setItem('maetha_approvals', JSON.stringify(defaultApprovals));
+      setApprovalList(DEFAULT_APPROVAL_LIST);
+      localStorage.setItem('maetha_approvals', JSON.stringify(DEFAULT_APPROVAL_LIST));
     }
 
     // 4. Head profile settings
