@@ -1,0 +1,6 @@
+{
+  "name": "Mae Tha Radiology E-Learning",
+  "description": "ระบบอบรมออนไลน์และออกใบประกาศนียบัตร หน่วยงานรังสีเทคนิค โรงพยาบาลแม่ทา",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
