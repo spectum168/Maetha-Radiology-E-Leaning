@@ -593,13 +593,13 @@ export default function App() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`text-[9px] px-2 py-0.5 border font-mono font-bold ${
-                            compCount === 6 
+                            compCount === TOPICS_DATA.length 
                               ? 'bg-emerald-150 border-emerald-500 text-emerald-900' 
                               : compCount > 0 
                                 ? 'bg-amber-100 border-amber-300 text-amber-900' 
                                 : 'bg-slate-50 border-slate-300 text-slate-700'
                           }`}>
-                            {compCount}/6
+                            {compCount}/{TOPICS_DATA.length}
                           </span>
                           <button
                             id={`del-staff-${s.id}`}
@@ -684,7 +684,7 @@ export default function App() {
             <div className="border-t border-black pt-4 space-y-3">
               <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-slate-800" />
-                หัวข้อวิชาอบรม (6 หลักสูตร)
+                หัวข้อวิชาอบรม ({TOPICS_DATA.length} หลักสูตร)
               </h3>
               <div className="space-y-1.5">
                 {TOPICS_DATA.map((t, idx) => {
@@ -987,13 +987,13 @@ export default function App() {
                     <p className="text-3xl font-serif font-extrabold text-[#1A1A1A] leading-none">
                       {progressList.filter(p => p.status === 'completed').length} ครั้ง
                     </p>
-                    <p className="text-[10px] text-slate-500 font-serif">จากวิชาบทเรียนรังสีวิทยา 6 หลักสูตร</p>
+                    <p className="text-[10px] text-slate-500 font-serif">จากวิชาบทเรียนรังสีวิทยา {TOPICS_DATA.length} หลักสูตร</p>
                   </div>
                   <div className="bg-[#F3F2F0] border border-black p-5 rounded-none space-y-1">
                     <p className="text-slate-600 text-[10px] font-extrabold uppercase tracking-wider font-mono">ความสำเร็จเฉลี่ยของหน่วยงาน</p>
                     <p className="text-3xl font-serif font-extrabold text-blue-900 leading-none">
                       {totalStaffCount > 0 
-                        ? Math.round((progressList.filter(p => p.status === 'completed').length / (totalStaffCount * 6)) * 100) 
+                        ? Math.round((progressList.filter(p => p.status === 'completed').length / (totalStaffCount * TOPICS_DATA.length)) * 100) 
                         : 0}%
                     </p>
                     <p className="text-[10px] text-slate-500 font-serif">สัดส่วนเจ้าหน้าที่ผ่านครบเกณฑ์เฉลี่ย</p>
