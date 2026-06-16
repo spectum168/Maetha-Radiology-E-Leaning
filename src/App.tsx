@@ -92,11 +92,20 @@ export default function App() {
   useEffect(() => {
     // 1. Initial Staff Templates
     const savedStaff = localStorage.getItem('maetha_staff');
-    if (savedStaff && !savedStaff.includes('staff-1')) {
-      const parsed = JSON.parse(savedStaff);
-      setStaffList(parsed);
-      if (parsed.length > 0) setActiveStaffId(parsed[0].id);
-    } else {
+    let hasLoadedStaff = false;
+    if (savedStaff) {
+      try {
+        const parsed = JSON.parse(savedStaff);
+        if (Array.isArray(parsed) && !parsed.some((s: any) => s.id === 'staff-1' || s.id === 'staff-2')) {
+          setStaffList(parsed);
+          if (parsed.length > 0) setActiveStaffId(parsed[0].id);
+          hasLoadedStaff = true;
+        }
+      } catch (e) {
+        console.error('Error parsing saved staff:', e);
+      }
+    }
+    if (!hasLoadedStaff) {
       setStaffList(DEFAULT_STAFF_LIST);
       setActiveStaffId(DEFAULT_STAFF_LIST[0].id);
       localStorage.setItem('maetha_staff', JSON.stringify(DEFAULT_STAFF_LIST));
@@ -104,18 +113,38 @@ export default function App() {
 
     // 2. Training Progress
     const savedProgress = localStorage.getItem('maetha_progress');
-    if (savedProgress && !savedProgress.includes('staff-1')) {
-      setProgressList(JSON.parse(savedProgress));
-    } else {
+    let hasLoadedProgress = false;
+    if (savedProgress) {
+      try {
+        const parsed = JSON.parse(savedProgress);
+        if (Array.isArray(parsed) && !parsed.some((p: any) => p.staffId === 'staff-1' || p.staffId === 'staff-2')) {
+          setProgressList(parsed);
+          hasLoadedProgress = true;
+        }
+      } catch (e) {
+        console.error('Error parsing saved progress:', e);
+      }
+    }
+    if (!hasLoadedProgress) {
       setProgressList(DEFAULT_PROGRESS_LIST);
       localStorage.setItem('maetha_progress', JSON.stringify(DEFAULT_PROGRESS_LIST));
     }
 
     // 3. Approval List
     const savedApprovals = localStorage.getItem('maetha_approvals');
-    if (savedApprovals && !savedApprovals.includes('staff-1')) {
-      setApprovalList(JSON.parse(savedApprovals));
-    } else {
+    let hasLoadedApprovals = false;
+    if (savedApprovals) {
+      try {
+        const parsed = JSON.parse(savedApprovals);
+        if (Array.isArray(parsed) && !parsed.some((a: any) => a.staffId === 'staff-1' || a.staffId === 'staff-2')) {
+          setApprovalList(parsed);
+          hasLoadedApprovals = true;
+        }
+      } catch (e) {
+        console.error('Error parsing saved approvals:', e);
+      }
+    }
+    if (!hasLoadedApprovals) {
       setApprovalList(DEFAULT_APPROVAL_LIST);
       localStorage.setItem('maetha_approvals', JSON.stringify(DEFAULT_APPROVAL_LIST));
     }
