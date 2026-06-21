@@ -42,6 +42,20 @@ export const DEFAULT_STAFF_LIST: Staff[] = [
     position: 'ผู้ช่วยเหลือคนไข้',
     department: 'กลุ่มการพยาบาล',
     registeredAt: '2026-05-25T08:27:33.326Z'
+  },
+  {
+    id: 'staff-1779697660001',
+    name: 'ปัฐวีพงษ์ มโนชมภู',
+    position: 'ผู้ช่วยเหลือคนไข้',
+    department: 'กลุ่มการพยาบาล',
+    registeredAt: '2026-06-15T08:00:00.000Z'
+  },
+  {
+    id: 'staff-1779697660002',
+    name: 'อัครเดช พลอยพิมพ์',
+    position: 'ผู้ช่วยเหลือคนไข้',
+    department: 'กลุ่มการพยาบาล',
+    registeredAt: '2026-06-21T08:00:00.000Z'
   }
 ];
 

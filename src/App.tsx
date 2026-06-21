@@ -96,10 +96,26 @@ export default function App() {
     if (savedStaff) {
       try {
         const parsed = JSON.parse(savedStaff);
-        if (Array.isArray(parsed) && !parsed.some((s: any) => s.id === 'staff-1' || s.id === 'staff-2')) {
-          setStaffList(parsed);
-          if (parsed.length > 0) setActiveStaffId(parsed[0].id);
-          hasLoadedStaff = true;
+        if (Array.isArray(parsed)) {
+          // Filter out legacy hardcoded staff IDs
+          const cleaned = parsed.filter((s: any) => s && s.id !== 'staff-1' && s.id !== 'staff-2');
+          
+          // Merge missing DEFAULT_STAFF_LIST items by name or ID
+          const merged = [...cleaned];
+          DEFAULT_STAFF_LIST.forEach(def => {
+            if (!merged.some((s: any) => s.id === def.id || s.name === def.name)) {
+              merged.push(def);
+            }
+          });
+
+          if (merged.length > 0) {
+            setStaffList(merged);
+            // Default active staff: find "อัครเดช พลอยพิมพ์" if present, otherwise first element
+            const defaultActive = merged.find((s: any) => s.name === 'อัครเดช พลอยพิมพ์') || merged[0];
+            setActiveStaffId(defaultActive.id);
+            localStorage.setItem('maetha_staff', JSON.stringify(merged));
+            hasLoadedStaff = true;
+          }
         }
       } catch (e) {
         console.error('Error parsing saved staff:', e);
@@ -107,7 +123,8 @@ export default function App() {
     }
     if (!hasLoadedStaff) {
       setStaffList(DEFAULT_STAFF_LIST);
-      setActiveStaffId(DEFAULT_STAFF_LIST[0].id);
+      const defaultActive = DEFAULT_STAFF_LIST.find((s: any) => s.name === 'อัครเดช พลอยพิมพ์') || DEFAULT_STAFF_LIST[0];
+      setActiveStaffId(defaultActive.id);
       localStorage.setItem('maetha_staff', JSON.stringify(DEFAULT_STAFF_LIST));
     }
 
@@ -117,9 +134,23 @@ export default function App() {
     if (savedProgress) {
       try {
         const parsed = JSON.parse(savedProgress);
-        if (Array.isArray(parsed) && !parsed.some((p: any) => p.staffId === 'staff-1' || p.staffId === 'staff-2')) {
-          setProgressList(parsed);
-          hasLoadedProgress = true;
+        if (Array.isArray(parsed)) {
+          // Filter out progress records linked to legacy staff IDs
+          const cleaned = parsed.filter((p: any) => p && p.staffId !== 'staff-1' && p.staffId !== 'staff-2');
+          
+          // Merge missing DEFAULT_PROGRESS_LIST items
+          const merged = [...cleaned];
+          DEFAULT_PROGRESS_LIST.forEach(def => {
+            if (!merged.some((p: any) => p.staffId === def.staffId && p.topicId === def.topicId)) {
+              merged.push(def);
+            }
+          });
+
+          if (merged.length > 0) {
+            setProgressList(merged);
+            localStorage.setItem('maetha_progress', JSON.stringify(merged));
+            hasLoadedProgress = true;
+          }
         }
       } catch (e) {
         console.error('Error parsing saved progress:', e);
@@ -136,8 +167,20 @@ export default function App() {
     if (savedApprovals) {
       try {
         const parsed = JSON.parse(savedApprovals);
-        if (Array.isArray(parsed) && !parsed.some((a: any) => a.staffId === 'staff-1' || a.staffId === 'staff-2')) {
-          setApprovalList(parsed);
+        if (Array.isArray(parsed)) {
+          // Filter out approval records linked to legacy staff IDs
+          const cleaned = parsed.filter((a: any) => a && a.staffId !== 'staff-1' && a.staffId !== 'staff-2');
+          
+          // Merge missing DEFAULT_APPROVAL_LIST items
+          const merged = [...cleaned];
+          DEFAULT_APPROVAL_LIST.forEach(def => {
+            if (!merged.some((a: any) => a.staffId === def.staffId && a.topicId === def.topicId)) {
+              merged.push(def);
+            }
+          });
+
+          setApprovalList(merged);
+          localStorage.setItem('maetha_approvals', JSON.stringify(merged));
           hasLoadedApprovals = true;
         }
       } catch (e) {
@@ -207,6 +250,8 @@ export default function App() {
     
     // reset form
     setNewStaffName('');
+
+    triggerAlert('ลงทะเบียนสำเร็จ', `บันทึกข้อมูลและตั้งค่าให้ คุณ ${newStaff.name} (${newStaff.position}) เป็นผู้เรียนปัจจุบันประจำระบบเรียบร้อยค่ะ`);
   };
 
   // Delete Staff
@@ -299,7 +344,36 @@ export default function App() {
     setQuizSubmitted(true);
     
     if (passed) {
-      setQuizFeedback(`ผ่านการประเมิน! คุณทำคะแนนได้ ${correctCount}/${topic.questions.length} คะแนน กรุณากดยืนยันเพื่อยื่นคำขอรับเกียรติบัตรไปยังหัวหน้างานกลุ่มงานรังสีเทคนิคเพื่อพิจารณาอนุมัติ`);
+      setQuizFeedback(`ผ่านการประเมิน! คุณทำคะแนนได้ ${correctCount}/${topic.questions.length} คะแนน ระบบอัปเดตบันทึกสถิติลงแฟ้มผลการสอบโดยอัตโนมัติแล้วค่ะ ท่านสามารถลงลายมือชื่อดิจิทัลและกด "ยืนยันและสลักลายมือชื่อ" ด้านล่างเพื่อส่งอนุมัติออกเกียรติบัตรรับรองเสร็จสิ้นสมบูรณ์ หรือย้ายประเภทตรวจสอบหน้า Portfolio ได้ทันที`);
+      
+      if (activeStaffId) {
+        const existingIdx = progressList.findIndex(
+          p => p.staffId === activeStaffId && p.topicId === topic.id
+        );
+
+        const newProgress: TrainingProgress = {
+          staffId: activeStaffId,
+          topicId: topic.id,
+          status: 'completed',
+          quizScore: correctCount,
+          maxScore: topic.questions.length,
+          passed: true,
+          completedAt: new Date().toISOString(),
+          staffSignature: tempStaffSignature || ''
+        };
+
+        const updatedProgress = [...progressList];
+        if (existingIdx >= 0) {
+          if (!newProgress.staffSignature && updatedProgress[existingIdx].staffSignature) {
+            newProgress.staffSignature = updatedProgress[existingIdx].staffSignature;
+          }
+          updatedProgress[existingIdx] = newProgress;
+        } else {
+          updatedProgress.push(newProgress);
+        }
+        
+        saveProgressList(updatedProgress);
+      }
     } else {
       setQuizFeedback(`ไม่ผ่านเกณฑ์ขั้นต่ำสำหรับประกาศนียบัตร (ต้องการขั้นต่ำ ${minPassCount}/${topic.questions.length} คะแนน) ได้รับคะแนน: ${correctCount} คะแนน กรุณาลองทบทวนบทเรียนและทำข้อสอบใหม่อีกครั้ง`);
     }

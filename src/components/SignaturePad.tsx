@@ -101,7 +101,8 @@ export function SignaturePad({ onSave, onClear, placeholder = "เขียน�
     setIsDrawing(false);
     
     const canvas = canvasRef.current;
-    if (canvas && hasDrawed) {
+    if (canvas) {
+      setHasDrawed(true);
       // Pass the drawn state out
       onSave(canvas.toDataURL());
     }
