@@ -165,4 +165,88 @@ export const DEFAULT_PROGRESS_LIST: TrainingProgress[] = [
   }
 ];
 
-export const DEFAULT_APPROVAL_LIST: ApprovalRecord[] = [];
+export const DEFAULT_APPROVAL_LIST: ApprovalRecord[] = [
+  // สิทธิศักดิ์ เลาหกุล (6 approved courses)
+  {
+    staffId: 'staff-1779697586708',
+    topicId: 'carestream-pacs',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-04T09:00:00.000Z'
+  },
+  {
+    staffId: 'staff-1779697586708',
+    topicId: 'pdpa-radiology',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-04T09:00:00.000Z'
+  },
+  {
+    staffId: 'staff-1779697586708',
+    topicId: 'daily-qa',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-04T09:00:00.000Z'
+  },
+  {
+    staffId: 'staff-1779697586708',
+    topicId: 'reject-analysis',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-04T09:00:00.000Z'
+  },
+  {
+    staffId: 'staff-1779697586708',
+    topicId: 'marker-tech',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-04T09:00:00.000Z'
+  },
+  {
+    staffId: 'staff-1779697586708',
+    topicId: 'positioning-transfer',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-04T09:00:00.000Z'
+  },
+  // ธีรพล เตจ๊ะเสาร์ (3 approved courses)
+  {
+    staffId: 'staff-1779697598741',
+    topicId: 'daily-qa',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-09T08:30:00.000Z'
+  },
+  {
+    staffId: 'staff-1779697598741',
+    topicId: 'marker-tech',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-09T08:30:00.000Z'
+  },
+  {
+    staffId: 'staff-1779697598741',
+    topicId: 'positioning-transfer',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-09T08:30:00.000Z'
+  },
+  // เจษฎา จามิตร (1 approved course)
+  {
+    staffId: 'staff-1779697612230',
+    topicId: 'reject-analysis',
+    headName: 'นายสิทธิศักดิ์ เลาหกุล',
+    headPosition: 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+    headSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="20" fill="green" font-style="italic">Sittisak</text></svg>',
+    approvedAt: '2026-06-11T09:30:00.000Z'
+  }
+];

@@ -551,6 +551,11 @@ export default function App() {
           DEFAULT_PROGRESS_LIST.forEach(item => {
             batch.set(doc(db, 'progress', `${item.staffId}_${item.topicId}`), item);
           });
+
+          // 3. Overwrite 10 approval records
+          DEFAULT_APPROVAL_LIST.forEach(item => {
+            batch.set(doc(db, 'approvals', `${item.staffId}_${item.topicId}`), item);
+          });
           
           await batch.commit();
           triggerAlert('คืนค่าสำเร็จ', 'ระบบทำการดึงข้อมูลเจ้าหน้าที่เดิมทั้ง 8 ท่าน และบันทึกคะแนนสอบประเมินคืนสู่ฐานข้อมูล Firestore เรียบร้อยแล้วค่ะ!');
