@@ -151,6 +151,17 @@ export const DEFAULT_PROGRESS_LIST: TrainingProgress[] = [
     passed: true,
     completedAt: '2026-06-09T07:59:53.103Z',
     staffSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="22" fill="blue" font-style="italic">Teerapon</text></svg>'
+  },
+  // เจษฎา จามิตร
+  {
+    staffId: 'staff-1779697612230',
+    topicId: 'reject-analysis',
+    status: 'completed',
+    quizScore: 5,
+    maxScore: 5,
+    passed: true,
+    completedAt: '2026-06-11T09:00:00.000Z',
+    staffSignature: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="35"><text x="10" y="25" font-family="cursive" font-size="22" fill="blue" font-style="italic">Jesada</text></svg>'
   }
 ];
 

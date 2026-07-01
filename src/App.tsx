@@ -533,6 +533,35 @@ export default function App() {
     );
   };
 
+  // Restore original default data to Firestore
+  const handleRestoreDefaults = () => {
+    triggerConfirm(
+      'ยืนยันการคืนค่าข้อมูลดั้งเดิม',
+      'คุณต้องการเขียนทับหรือคืนค่ารายชื่อเจ้าหน้าที่ทั้ง 8 ท่าน พร้อมประวัติผลการเรียนและการประเมินทั้งหมด (10 คอร์สสำเร็จ) กลับมาใส่ใหม่ด้วยข้อมูลจากระบบต้นฉบับใช่หรือไม่?',
+      async () => {
+        try {
+          const batch = writeBatch(db);
+          
+          // 1. Overwrite 8 staff members
+          DEFAULT_STAFF_LIST.forEach(item => {
+            batch.set(doc(db, 'staff', item.id), item);
+          });
+          
+          // 2. Overwrite 10 progress records
+          DEFAULT_PROGRESS_LIST.forEach(item => {
+            batch.set(doc(db, 'progress', `${item.staffId}_${item.topicId}`), item);
+          });
+          
+          await batch.commit();
+          triggerAlert('คืนค่าสำเร็จ', 'ระบบทำการดึงข้อมูลเจ้าหน้าที่เดิมทั้ง 8 ท่าน และบันทึกคะแนนสอบประเมินคืนสู่ฐานข้อมูล Firestore เรียบร้อยแล้วค่ะ!');
+        } catch (err) {
+          console.error('Error restoring defaults:', err);
+          triggerAlert('เกิดข้อผิดพลาด', 'ไม่สามารถเขียนทับข้อมูลดั้งเดิมลงฐานข้อมูลได้สำเร็จ');
+        }
+      }
+    );
+  };
+
   // Get active staff metadata
   const activeStaff = staffList.find(s => s.id === activeStaffId);
   const currentTopic = TOPICS_DATA.find(t => t.id === selectedTopicId);
@@ -1153,17 +1182,25 @@ export default function App() {
 
                 {/* Detail Matrix Checklist Report ready for Print/Download */}
                 <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between border-b-2 border-black pb-1.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-black pb-1.5 gap-2">
                     <h3 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider font-mono">
                       ตารางสรุปแบบประเมินรายบุคคล (Hospital Audit Matrix)
                     </h3>
-                    <button
-                      id="print-audit-btn"
-                      onClick={() => window.print()}
-                      className="px-3.5 py-1.5 bg-[#1A1A1A] hover:bg-black text-white font-extrabold text-[10px] uppercase tracking-wider rounded-none border border-black transition-colors cursor-pointer"
-                    >
-                      พิมพ์รายงานสารสนเทศ (Print Audit)
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleRestoreDefaults}
+                        className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-[10px] uppercase tracking-wider rounded-none border border-black transition-colors cursor-pointer"
+                      >
+                        🔄 คืนค่าข้อมูลเจ้าหน้าที่และคะแนนเดิม
+                      </button>
+                      <button
+                        id="print-audit-btn"
+                        onClick={() => window.print()}
+                        className="px-3.5 py-1.5 bg-[#1A1A1A] hover:bg-black text-white font-extrabold text-[10px] uppercase tracking-wider rounded-none border border-black transition-colors cursor-pointer"
+                      >
+                        พิมพ์รายงานสารสนเทศ (Print Audit)
+                      </button>
+                    </div>
                   </div>
 
                   <div className="overflow-x-auto rounded-none border border-black shadow-none">
