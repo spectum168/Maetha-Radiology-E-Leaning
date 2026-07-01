@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "Staff": {
+      "title": "Staff",
+      "description": "Represents a staff member enrolled in the training system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique staff ID" },
+        "name": { "type": "string", "description": "Full name of the staff member" },
+        "position": { "type": "string", "description": "Job position" },
+        "department": { "type": "string", "description": "Department name" },
+        "registeredAt": { "type": "string", "format": "date-time", "description": "ISO timestamp of registration" }
+      },
+      "required": ["id", "name", "position", "department", "registeredAt"]
+    },
+    "TrainingProgress": {
+      "title": "TrainingProgress",
+      "description": "Represents the completion or study status of a course topic by a staff member",
+      "type": "object",
+      "properties": {
+        "staffId": { "type": "string", "description": "Referenced staff member ID" },
+        "topicId": { "type": "string", "description": "Referenced course topic ID" },
+        "status": { "type": "string", "enum": ["studying", "completed"], "description": "Current status of the course" },
+        "quizScore": { "type": "integer", "description": "Most recent quiz score" },
+        "maxScore": { "type": "integer", "description": "Total number of quiz questions" },
+        "passed": { "type": "boolean", "description": "Whether the staff passed the minimum threshold" },
+        "completedAt": { "type": "string", "format": "date-time", "description": "ISO timestamp of completion" },
+        "staffSignature": { "type": "string", "description": "Data URL of the digital signature" }
+      },
+      "required": ["staffId", "topicId", "status", "quizScore", "maxScore", "passed"]
+    },
+    "ApprovalRecord": {
+      "title": "ApprovalRecord",
+      "description": "Represents the approval of a completed course by the Head of Department",
+      "type": "object",
+      "properties": {
+        "staffId": { "type": "string", "description": "Referenced staff member ID" },
+        "topicId": { "type": "string", "description": "Referenced course topic ID" },
+        "headName": { "type": "string", "description": "Name of the approving HOD" },
+        "headPosition": { "type": "string", "description": "Position of the approving HOD" },
+        "headSignature": { "type": "string", "description": "Data URL of the HOD signature" },
+        "approvedAt": { "type": "string", "format": "date-time", "description": "ISO timestamp of approval" }
+      },
+      "required": ["staffId", "topicId", "headName", "headPosition", "headSignature", "approvedAt"]
+    },
+    "HODSettings": {
+      "title": "HODSettings",
+      "description": "Configuration settings for the Head of Department",
+      "type": "object",
+      "properties": {
+        "headName": { "type": "string", "description": "HOD Name" },
+        "headPosition": { "type": "string", "description": "HOD Position" },
+        "headSignature": { "type": "string", "description": "Data URL of the HOD signature" }
+      },
+      "required": ["headName", "headPosition"]
+    }
+  },
+  "firestore": {
+    "/staff/{staffId}": {
+      "schema": "Staff",
+      "description": "Collection of registered staff members"
+    },
+    "/progress/{progressId}": {
+      "schema": "TrainingProgress",
+      "description": "Collection of training progress and quiz records"
+    },
+    "/approvals/{approvalId}": {
+      "schema": "ApprovalRecord",
+      "description": "Collection of HOD approval records"
+    },
+    "/settings/{settingsId}": {
+      "schema": "HODSettings",
+      "description": "General application configurations and HOD profile"
+    }
+  }
+}

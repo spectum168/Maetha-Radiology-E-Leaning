@@ -26,6 +26,15 @@ import { SignaturePad } from './components/SignaturePad';
 import { StaffPortfolio } from './components/StaffPortfolio';
 import { MaethaLogo } from './components/MaethaLogo';
 import { DEFAULT_STAFF_LIST, DEFAULT_PROGRESS_LIST, DEFAULT_APPROVAL_LIST } from './defaultData';
+import { db } from './lib/firebase';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  onSnapshot, 
+  writeBatch 
+} from 'firebase/firestore';
 
 export default function App() {
   // --- STATE ---
@@ -88,132 +97,161 @@ export default function App() {
     });
   };
 
-  // Initialize data from LocalStorage or default templates
+  // Initialize data from Firestore (realtime sync) with LocalStorage as a fallback/cache
   useEffect(() => {
-    // 1. Initial Staff Templates
-    const savedStaff = localStorage.getItem('maetha_staff');
-    let hasLoadedStaff = false;
-    if (savedStaff) {
-      try {
-        const parsed = JSON.parse(savedStaff);
-        if (Array.isArray(parsed)) {
-          // Filter out legacy hardcoded staff IDs
-          const cleaned = parsed.filter((s: any) => s && s.id !== 'staff-1' && s.id !== 'staff-2');
-          
-          // Merge missing DEFAULT_STAFF_LIST items by name or ID
-          const merged = [...cleaned];
-          DEFAULT_STAFF_LIST.forEach(def => {
-            if (!merged.some((s: any) => s.id === def.id || s.name === def.name)) {
-              merged.push(def);
-            }
-          });
-
-          if (merged.length > 0) {
-            setStaffList(merged);
-            // Default active staff: find "อัครเดช พลอยพิมพ์" if present, otherwise first element
-            const defaultActive = merged.find((s: any) => s.name === 'อัครเดช พลอยพิมพ์') || merged[0];
-            setActiveStaffId(defaultActive.id);
-            localStorage.setItem('maetha_staff', JSON.stringify(merged));
-            hasLoadedStaff = true;
-          }
+    // 1. Settings / HOD profile sync
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'global_settings'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.headName) {
+          setHeadName(data.headName);
+          localStorage.setItem('maetha_head_name', data.headName);
         }
-      } catch (e) {
-        console.error('Error parsing saved staff:', e);
-      }
-    }
-    if (!hasLoadedStaff) {
-      setStaffList(DEFAULT_STAFF_LIST);
-      const defaultActive = DEFAULT_STAFF_LIST.find((s: any) => s.name === 'อัครเดช พลอยพิมพ์') || DEFAULT_STAFF_LIST[0];
-      setActiveStaffId(defaultActive.id);
-      localStorage.setItem('maetha_staff', JSON.stringify(DEFAULT_STAFF_LIST));
-    }
-
-    // 2. Training Progress
-    const savedProgress = localStorage.getItem('maetha_progress');
-    let hasLoadedProgress = false;
-    if (savedProgress) {
-      try {
-        const parsed = JSON.parse(savedProgress);
-        if (Array.isArray(parsed)) {
-          // Filter out progress records linked to legacy staff IDs
-          const cleaned = parsed.filter((p: any) => p && p.staffId !== 'staff-1' && p.staffId !== 'staff-2');
-          
-          // Merge missing DEFAULT_PROGRESS_LIST items
-          const merged = [...cleaned];
-          DEFAULT_PROGRESS_LIST.forEach(def => {
-            if (!merged.some((p: any) => p.staffId === def.staffId && p.topicId === def.topicId)) {
-              merged.push(def);
-            }
-          });
-
-          if (merged.length > 0) {
-            setProgressList(merged);
-            localStorage.setItem('maetha_progress', JSON.stringify(merged));
-            hasLoadedProgress = true;
-          }
+        if (data.headPosition) {
+          setHeadPosition(data.headPosition);
+          localStorage.setItem('maetha_head_pos', data.headPosition);
         }
-      } catch (e) {
-        console.error('Error parsing saved progress:', e);
-      }
-    }
-    if (!hasLoadedProgress) {
-      setProgressList(DEFAULT_PROGRESS_LIST);
-      localStorage.setItem('maetha_progress', JSON.stringify(DEFAULT_PROGRESS_LIST));
-    }
-
-    // 3. Approval List
-    const savedApprovals = localStorage.getItem('maetha_approvals');
-    let hasLoadedApprovals = false;
-    if (savedApprovals) {
-      try {
-        const parsed = JSON.parse(savedApprovals);
-        if (Array.isArray(parsed)) {
-          // Filter out approval records linked to legacy staff IDs
-          const cleaned = parsed.filter((a: any) => a && a.staffId !== 'staff-1' && a.staffId !== 'staff-2');
-          
-          // Merge missing DEFAULT_APPROVAL_LIST items
-          const merged = [...cleaned];
-          DEFAULT_APPROVAL_LIST.forEach(def => {
-            if (!merged.some((a: any) => a.staffId === def.staffId && a.topicId === def.topicId)) {
-              merged.push(def);
-            }
-          });
-
-          setApprovalList(merged);
-          localStorage.setItem('maetha_approvals', JSON.stringify(merged));
-          hasLoadedApprovals = true;
+        if (data.headSignature !== undefined) {
+          setHeadSignature(data.headSignature);
+          localStorage.setItem('maetha_head_sig', data.headSignature);
         }
-      } catch (e) {
-        console.error('Error parsing saved approvals:', e);
+      } else {
+        // First-time seed of HOD settings if not in DB
+        const initialSettings = {
+          headName: localStorage.getItem('maetha_head_name') || 'นายสิทธิศักดิ์ เลาหกุล',
+          headPosition: localStorage.getItem('maetha_head_pos') || 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา',
+          headSignature: localStorage.getItem('maetha_head_sig') || ''
+        };
+        setDoc(doc(db, 'settings', 'global_settings'), initialSettings)
+          .catch(err => console.error("Error setting initial settings:", err));
       }
-    }
-    if (!hasLoadedApprovals) {
-      setApprovalList(DEFAULT_APPROVAL_LIST);
-      localStorage.setItem('maetha_approvals', JSON.stringify(DEFAULT_APPROVAL_LIST));
-    }
+    });
 
-    // 4. Head profile settings
-    const savedHeadName = localStorage.getItem('maetha_head_name');
-    if (savedHeadName && savedHeadName !== 'นายประสิทธิ์ แก้วสองเมือง') {
-      setHeadName(savedHeadName);
-    } else {
-      setHeadName('นายสิทธิศักดิ์ เลาหกุล');
-      localStorage.setItem('maetha_head_name', 'นายสิทธิศักดิ์ เลาหกุล');
-    }
+    // 2. Staff List realtime sync
+    const unsubStaff = onSnapshot(collection(db, 'staff'), (snapshot) => {
+      if (snapshot.empty) {
+        // Seed database from defaults or local storage
+        const savedStaffStr = localStorage.getItem('maetha_staff');
+        let initialStaff = DEFAULT_STAFF_LIST;
+        if (savedStaffStr) {
+          try {
+            const parsed = JSON.parse(savedStaffStr);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              initialStaff = parsed.filter((s: any) => s && s.id !== 'staff-1' && s.id !== 'staff-2');
+            }
+          } catch (_) {}
+        }
+        
+        const batch = writeBatch(db);
+        initialStaff.forEach(item => {
+          batch.set(doc(db, 'staff', item.id), item);
+        });
+        batch.commit()
+          .then(() => {
+            setStaffList(initialStaff);
+            localStorage.setItem('maetha_staff', JSON.stringify(initialStaff));
+          })
+          .catch(err => console.error("Error seeding staff:", err));
+      } else {
+        const list: Staff[] = [];
+        snapshot.forEach(docSnap => {
+          list.push(docSnap.data() as Staff);
+        });
+        // Sort by registeredAt ascending
+        list.sort((a, b) => new Date(a.registeredAt).getTime() - new Date(b.registeredAt).getTime());
+        setStaffList(list);
+        localStorage.setItem('maetha_staff', JSON.stringify(list));
 
-    const savedHeadPos = localStorage.getItem('maetha_head_pos');
-    if (savedHeadPos && savedHeadPos !== 'หัวหน้างานรังสีเทคนิค โรงพยาบาลแม่ทา') {
-      setHeadPosition(savedHeadPos);
-    } else {
-      setHeadPosition('หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา');
-      localStorage.setItem('maetha_head_pos', 'หัวหน้ากลุ่มงานรังสีเทคนิค โรงพยาบาลแม่ทา');
-    }
+        // Sync default active staff
+        if (list.length > 0) {
+          setActiveStaffId(prev => {
+            if (prev && list.some(s => s.id === prev)) return prev;
+            const akkaradech = list.find(s => s.name === 'อัครเดช พลอยพิมพ์');
+            return akkaradech ? akkaradech.id : list[0].id;
+          });
+        }
+      }
+    });
 
-    const savedHeadSig = localStorage.getItem('maetha_head_sig');
-    if (savedHeadSig) setHeadSignature(savedHeadSig);
+    // 3. Progress List realtime sync
+    const unsubProgress = onSnapshot(collection(db, 'progress'), (snapshot) => {
+      if (snapshot.empty) {
+        // Seed progress from defaults or local storage
+        const savedProgStr = localStorage.getItem('maetha_progress');
+        let initialProg = DEFAULT_PROGRESS_LIST;
+        if (savedProgStr) {
+          try {
+            const parsed = JSON.parse(savedProgStr);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              initialProg = parsed.filter((p: any) => p && p.staffId !== 'staff-1' && p.staffId !== 'staff-2');
+            }
+          } catch (_) {}
+        }
+
+        const batch = writeBatch(db);
+        initialProg.forEach(item => {
+          batch.set(doc(db, 'progress', `${item.staffId}_${item.topicId}`), item);
+        });
+        batch.commit()
+          .then(() => {
+            setProgressList(initialProg);
+            localStorage.setItem('maetha_progress', JSON.stringify(initialProg));
+          })
+          .catch(err => console.error("Error seeding progress:", err));
+      } else {
+        const list: TrainingProgress[] = [];
+        snapshot.forEach(docSnap => {
+          list.push(docSnap.data() as TrainingProgress);
+        });
+        setProgressList(list);
+        localStorage.setItem('maetha_progress', JSON.stringify(list));
+      }
+    });
+
+    // 4. Approval List realtime sync
+    const unsubApprovals = onSnapshot(collection(db, 'approvals'), (snapshot) => {
+      if (snapshot.empty) {
+        // Seed approvals from defaults or local storage
+        const savedAppStr = localStorage.getItem('maetha_approvals');
+        let initialApp = DEFAULT_APPROVAL_LIST;
+        if (savedAppStr) {
+          try {
+            const parsed = JSON.parse(savedAppStr);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              initialApp = parsed.filter((a: any) => a && a.staffId !== 'staff-1' && a.staffId !== 'staff-2');
+            }
+          } catch (_) {}
+        }
+
+        const batch = writeBatch(db);
+        initialApp.forEach(item => {
+          batch.set(doc(db, 'approvals', `${item.staffId}_${item.topicId}`), item);
+        });
+        batch.commit()
+          .then(() => {
+            setApprovalList(initialApp);
+            localStorage.setItem('maetha_approvals', JSON.stringify(initialApp));
+          })
+          .catch(err => console.error("Error seeding approvals:", err));
+      } else {
+        const list: ApprovalRecord[] = [];
+        snapshot.forEach(docSnap => {
+          list.push(docSnap.data() as ApprovalRecord);
+        });
+        setApprovalList(list);
+        localStorage.setItem('maetha_approvals', JSON.stringify(list));
+      }
+    });
+
+    return () => {
+      unsubSettings();
+      unsubStaff();
+      unsubProgress();
+      unsubApprovals();
+    };
   }, []);
 
-  // Save changes helper functions
+  // Save changes helper functions (keep localStorage as backup, write directly to Firestore)
   const saveStaffList = (list: Staff[]) => {
     setStaffList(list);
     localStorage.setItem('maetha_staff', JSON.stringify(list));
@@ -232,7 +270,7 @@ export default function App() {
   // --- HANDLERS ---
   
   // Create Staff
-  const handleAddStaff = (e: FormEvent) => {
+  const handleAddStaff = async (e: FormEvent) => {
     e.preventDefault();
     if (!newStaffName.trim()) return;
 
@@ -244,14 +282,15 @@ export default function App() {
       registeredAt: new Date().toISOString()
     };
 
-    const updated = [...staffList, newStaff];
-    saveStaffList(updated);
-    setActiveStaffId(newStaff.id);
-    
-    // reset form
-    setNewStaffName('');
-
-    triggerAlert('ลงทะเบียนสำเร็จ', `บันทึกข้อมูลและตั้งค่าให้ คุณ ${newStaff.name} (${newStaff.position}) เป็นผู้เรียนปัจจุบันประจำระบบเรียบร้อยค่ะ`);
+    try {
+      await setDoc(doc(db, 'staff', newStaff.id), newStaff);
+      setActiveStaffId(newStaff.id);
+      setNewStaffName('');
+      triggerAlert('ลงทะเบียนสำเร็จ', `บันทึกข้อมูลและตั้งค่าให้ คุณ ${newStaff.name} (${newStaff.position}) เป็นผู้เรียนปัจจุบันประจำระบบเรียบร้อยค่ะ`);
+    } catch (err) {
+      console.error('Error saving staff:', err);
+      triggerAlert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลการลงทะเบียนได้');
+    }
   };
 
   // Delete Staff
@@ -259,19 +298,27 @@ export default function App() {
     triggerConfirm(
       'ยืนยันการลบข้อมูลบุคลากร',
       'คุณต้องการลบข้อมูลบุคลากรรายนี้ใช่หรือไม่? ประวัติคะแนนการประเมินและเกียรติบัตรทั้งหมดของบุคลากรรายนี้จะถูกลบออกแบบถาวร',
-      () => {
-        const updated = staffList.filter(s => s.id !== id);
-        saveStaffList(updated);
+      async () => {
+        try {
+          await deleteDoc(doc(db, 'staff', id));
 
-        // Clean related progress and approvals
-        const filteredProgress = progressList.filter(p => p.staffId !== id);
-        saveProgressList(filteredProgress);
+          // Clean related progress and approvals
+          const relatedProgress = progressList.filter(p => p.staffId === id);
+          for (const p of relatedProgress) {
+            await deleteDoc(doc(db, 'progress', `${p.staffId}_${p.topicId}`));
+          }
 
-        const filteredApprovals = approvalList.filter(a => a.staffId !== id);
-        saveApprovalList(filteredApprovals);
+          const relatedApprovals = approvalList.filter(a => a.staffId === id);
+          for (const a of relatedApprovals) {
+            await deleteDoc(doc(db, 'approvals', `${a.staffId}_${a.topicId}`));
+          }
 
-        if (activeStaffId === id) {
-          setActiveStaffId(updated.length > 0 ? updated[0].id : '');
+          const remainingStaff = staffList.filter(s => s.id !== id);
+          if (activeStaffId === id) {
+            setActiveStaffId(remainingStaff.length > 0 ? remainingStaff[0].id : '');
+          }
+        } catch (err) {
+          console.error('Error deleting staff:', err);
         }
       }
     );
@@ -282,12 +329,13 @@ export default function App() {
     triggerConfirm(
       'ยืนยันการลบผลคะแนนการประเมิน',
       'คุณต้องการลบประวัติคำขอและผลคะแนนเรียนวิชานี้ของบุคลากรใช่หรือไม่? การอนุมัติเกียรติบัตรที่เกี่ยวเนื่องจะถูกเพิกถอนออกแบบถาวรด้วยเพื่อให้เจ้าหน้าที่สามารถทำแบบทดสอบใหม่ได้',
-      () => {
-        const filteredProgress = progressList.filter(p => !(p.staffId === staffId && p.topicId === topicId));
-        saveProgressList(filteredProgress);
-
-        const filteredApprovals = approvalList.filter(a => !(a.staffId === staffId && a.topicId === topicId));
-        saveApprovalList(filteredApprovals);
+      async () => {
+        try {
+          await deleteDoc(doc(db, 'progress', `${staffId}_${topicId}`));
+          await deleteDoc(doc(db, 'approvals', `${staffId}_${topicId}`));
+        } catch (err) {
+          console.error('Error deleting progress:', err);
+        }
       }
     );
   };
@@ -337,7 +385,6 @@ export default function App() {
       }
     });
 
-    const isPassed = correctCount === topic.questions.length; // Must pass all or 2/3? Let's say needs >= 2 of 3 to pass
     const minPassCount = Math.ceil(topic.questions.length * 0.66); // 2 out of 3
     const passed = correctCount >= minPassCount;
 
@@ -362,17 +409,13 @@ export default function App() {
           staffSignature: tempStaffSignature || ''
         };
 
-        const updatedProgress = [...progressList];
-        if (existingIdx >= 0) {
-          if (!newProgress.staffSignature && updatedProgress[existingIdx].staffSignature) {
-            newProgress.staffSignature = updatedProgress[existingIdx].staffSignature;
-          }
-          updatedProgress[existingIdx] = newProgress;
-        } else {
-          updatedProgress.push(newProgress);
+        const existingItem = existingIdx >= 0 ? progressList[existingIdx] : null;
+        if (existingItem && !newProgress.staffSignature && existingItem.staffSignature) {
+          newProgress.staffSignature = existingItem.staffSignature;
         }
         
-        saveProgressList(updatedProgress);
+        setDoc(doc(db, 'progress', `${activeStaffId}_${topic.id}`), newProgress)
+          .catch(err => console.error("Error saving progress:", err));
       }
     } else {
       setQuizFeedback(`ไม่ผ่านเกณฑ์ขั้นต่ำสำหรับประกาศนียบัตร (ต้องการขั้นต่ำ ${minPassCount}/${topic.questions.length} คะแนน) ได้รับคะแนน: ${correctCount} คะแนน กรุณาลองทบทวนบทเรียนและทำข้อสอบใหม่อีกครั้ง`);
@@ -384,7 +427,7 @@ export default function App() {
     setTempStaffSignature(sigDataUrl);
   };
 
-  const handleClaimCertificate = () => {
+  const handleClaimCertificate = async () => {
     if (!activeStaffId) {
       triggerAlert('เลือกผู้ใช้งาน', 'กรุณาเลือกชื่อบุคลากรผู้เรียนก่อนทำการบันทึกยืนยัน');
       return;
@@ -398,11 +441,6 @@ export default function App() {
       if (quizAnswers[q.id] === q.correctAnswerIdx) correctCount++;
     });
 
-    // Update progress state
-    const existingIdx = progressList.findIndex(
-      p => p.staffId === activeStaffId && p.topicId === selectedTopicId
-    );
-
     const newProgress: TrainingProgress = {
       staffId: activeStaffId,
       topicId: selectedTopicId,
@@ -414,44 +452,53 @@ export default function App() {
       staffSignature: tempStaffSignature || ''
     };
 
-    let updatedProgress = [...progressList];
-    if (existingIdx >= 0) {
-      updatedProgress[existingIdx] = newProgress;
-    } else {
-      updatedProgress.push(newProgress);
+    try {
+      await setDoc(doc(db, 'progress', `${activeStaffId}_${selectedTopicId}`), newProgress);
+      triggerAlert('บันทึกสำเร็จ', 'บันทึกคะแนนและลายมือชื่อของท่านลงเวชระเบียนแฟ้มผลการสอบเรียบร้อยแล้วค่ะ! ท่านสามารถตรวจสอบแฟ้มสะสมงานบุคคล (Staff Portfolio) ทันที');
+      // Reset temp signature
+      setTempStaffSignature('');
+      // Switch to Portfolio View
+      setActiveTab('portfolio');
+    } catch (err) {
+      console.error('Error saving progress with signature:', err);
+      triggerAlert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลการเคลมเกียรติบัตรได้');
     }
-
-    saveProgressList(updatedProgress);
-    triggerAlert('บันทึกสำเร็จ', 'บันทึกคะแนนและลายมือชื่อของท่านลงเวชระเบียนแฟ้มผลการสอบเรียบร้อยแล้วค่ะ! ท่านสามารถตรวจสอบแฟ้มสะสมงานบุคคล (Staff Portfolio) ทันที');
-    
-    // Reset temp signature
-    setTempStaffSignature('');
-    // Switch to Portfolio View
-    setActiveTab('portfolio');
   };
 
   // Set HOD profile and save
-  const handleSaveHODConfig = () => {
-    localStorage.setItem('maetha_head_name', headName);
-    localStorage.setItem('maetha_head_pos', headPosition);
-    triggerAlert('บันทึกสำเร็จ', 'บันทึกข้อมูลตัวตนหัวหน้ากลุ่มงานรังสีการแพทย์เสร็จเรียบร้อย');
+  const handleSaveHODConfig = async () => {
+    try {
+      await setDoc(doc(db, 'settings', 'global_settings'), {
+        headName,
+        headPosition
+      }, { merge: true });
+      localStorage.setItem('maetha_head_name', headName);
+      localStorage.setItem('maetha_head_pos', headPosition);
+      triggerAlert('บันทึกสำเร็จ', 'บันทึกข้อมูลตัวตนหัวหน้ากลุ่มงานรังสีการแพทย์เสร็จเรียบร้อย');
+    } catch (err) {
+      console.error('Error saving HOD config:', err);
+      triggerAlert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้');
+    }
   };
 
-  const handleSaveHODSignature = (sigDataUrl: string) => {
+  const handleSaveHODSignature = async (sigDataUrl: string) => {
     setHeadSignature(sigDataUrl);
     localStorage.setItem('maetha_head_sig', sigDataUrl);
+    try {
+      await setDoc(doc(db, 'settings', 'global_settings'), {
+        headSignature: sigDataUrl
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error saving HOD signature:', err);
+    }
   };
 
   // Approved and sign a specific staff progress index
-  const handleApproveCertificate = (staffId: string, topicId: string) => {
+  const handleApproveCertificate = async (staffId: string, topicId: string) => {
     if (!headSignature) {
       triggerAlert('กรุณาลงลายไม้ชื่อ', 'กรุณาจรดปากกาเซ็นระบบของหัวหน้ากลุ่มงานด้านบนก่อน เพื่อใช้ตัวตนลงลายมือชื่อพิจารณาอนุมัติเกียรติบัตร');
       return;
     }
-
-    const existingIdx = approvalList.findIndex(
-      a => a.staffId === staffId && a.topicId === topicId
-    );
 
     const newApproval: ApprovalRecord = {
       staffId,
@@ -462,15 +509,13 @@ export default function App() {
       approvedAt: new Date().toISOString()
     };
 
-    let updatedApprovals = [...approvalList];
-    if (existingIdx >= 0) {
-      updatedApprovals[existingIdx] = newApproval;
-    } else {
-      updatedApprovals.push(newApproval);
+    try {
+      await setDoc(doc(db, 'approvals', `${staffId}_${topicId}`), newApproval);
+      triggerAlert('อนุมัติเกียรติบัตรสำเร็จ', 'ระบบทำการอนุมัติผลการเรียน ออกหนังสือรับรองเกียรติบัตรออนไลน์ และลงลายเซ็นสดของหัวหน้างานเรียบร้อย');
+    } catch (err) {
+      console.error('Error approving certificate:', err);
+      triggerAlert('เกิดข้อผิดพลาด', 'ไม่สามารถอนุมัติได้');
     }
-
-    saveApprovalList(updatedApprovals);
-    triggerAlert('อนุมัติเกียรติบัตรสำเร็จ', 'ระบบทำการอนุมัติผลการเรียน ออกหนังสือรับรองเกียรติบัตรออนไลน์ และลงลายเซ็นสดของหัวหน้างานเรียบร้อย');
   };
 
   // Reject/Delete an approval
@@ -478,9 +523,12 @@ export default function App() {
     triggerConfirm(
       'ยืนยันการยกเลิกการลงนามอนุมัติ',
       'คุณต้องการยกเลิกการลงนามลายเซ็นรับรองเกียรติบัตรใบนี้ใช่หรือไม่?',
-      () => {
-        const updated = approvalList.filter(a => !(a.staffId === staffId && a.topicId === topicId));
-        saveApprovalList(updated);
+      async () => {
+        try {
+          await deleteDoc(doc(db, 'approvals', `${staffId}_${topicId}`));
+        } catch (err) {
+          console.error('Error revoking approval:', err);
+        }
       }
     );
   };
